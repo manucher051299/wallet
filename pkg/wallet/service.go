@@ -48,17 +48,15 @@ func (s *Service) SumPayments(goroutines int) types.Money {
 			sliceLen = len(s.payments) - i
 		}
 		go func(j int, len int) {
-			ans := int64(0)
-			for ; j < len; j++ {
-				ans += int64(s.payments[j].Amount)
-			}
+			defer wg.Done()
+
 			mu.Lock()
-			sum += ans
+			for ; j < len; j++ {
+				sum += int64(s.payments[j].Amount)
+			}
 			mu.Unlock()
-			wg.Done()
-		}(i, i+sliceLen)
+		}(i, sliceLen)
 	}
-	wg.Wait()
 	return types.Money(sum)
 }
 func (s *Service) ExportAccountHistory(accountID int64) ([]types.Payment, error) {
@@ -385,7 +383,7 @@ func (s *Service) ImportFromFile(path string) error {
 			if err != nil {
 				return err
 			}
-			balance, err := strconv.ParseInt(account[2], 10, 64)
+			balance, err := strconv.ParseInt(account[1], 10, 64)
 			if err != nil {
 				return err
 			}
