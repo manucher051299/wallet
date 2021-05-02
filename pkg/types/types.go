@@ -42,3 +42,7 @@ type Favorite struct {
 	Name      string
 	Category  PaymentCategory
 }
+type Progress struct {
+	Part   int
+	Result Money
+}

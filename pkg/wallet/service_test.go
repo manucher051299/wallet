@@ -10,6 +10,44 @@ import (
 	"github.com/manucher051299/wallet/pkg/types"
 )
 
+func BenchmarkFilterPayments_single(b *testing.B) {
+	s := &Service{}
+	s.RegisterAccount("900000001")
+	s.Deposit(1, 1000_00)
+	s.Pay(1, 10, "smth")
+	want := []types.Payment{{AccountID: 1, Amount: 10, Category: "smth", Status: "INPROGRESS"}}
+	for i := 0; i < b.N; i++ {
+		payments, err := s.FilterPayments(1, 1)
+		if err != nil {
+			b.Fatal(err)
+		}
+		for i := 0; i < len(payments); i++ {
+			if payments[i].AccountID != want[i].AccountID || payments[i].Amount != want[i].Amount || payments[i].Category != want[i].Category || payments[i].Status != want[i].Status {
+				b.Fatalf("invalid result, got %v wanted %v", payments, want)
+			}
+		}
+	}
+}
+func BenchmarkFilterPayments_multiple(b *testing.B) {
+	s := &Service{}
+	s.RegisterAccount("900000001")
+	s.Deposit(1, 1000_00)
+	s.Pay(1, 10, "smth")
+	s.Pay(1, 10, "smth")
+	s.Pay(1, 10, "smth")
+	want := []types.Payment{{AccountID: 1, Amount: 10, Category: "smth", Status: "INPROGRESS"}, {AccountID: 1, Amount: 10, Category: "smth", Status: "INPROGRESS"}, {AccountID: 1, Amount: 10, Category: "smth", Status: "INPROGRESS"}}
+	for i := 0; i < b.N; i++ {
+		payments, err := s.FilterPayments(1, 2)
+		if err != nil {
+			b.Fatal(err)
+		}
+		for i := 0; i < len(payments); i++ {
+			if payments[i].AccountID != want[i].AccountID || payments[i].Amount != want[i].Amount || payments[i].Category != want[i].Category || payments[i].Status != want[i].Status {
+				b.Fatalf("invalid result, got %v wanted %v", payments, want)
+			}
+		}
+	}
+}
 func BenchmarkSumPayments_single(b *testing.B) {
 	s := newTestService()
 	s.addAccount(defaultTestAccount)
